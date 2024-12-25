@@ -13,10 +13,13 @@ import scala.language.unsafeNulls
 import scala.jdk.CollectionConverters.*
 import scala.util.control.NonFatal
 
-import sbt.internal.inc.binary.converters.ProtobufReaders
 import sbt.internal.inc.Schema
+import sbt.internal.inc.text.TextAnalysisFormat
+import sbt.internal.inc.{APIs, Analysis, CompanionsStore}
+import xsbti.compile.analysis.{ReadMapper, ReadWriteMappers}
 import scopt.OParser
 import xsbti.compile.analysis.ReadMapper
+import java.io.{BufferedReader, InputStreamReader}
 
 import common.sbt_testing.*
 import workers.common.Bazel
@@ -130,11 +133,18 @@ object TestRunner:
     val apisStream = Files.newInputStream(apisFile)
     val apis =
       try
-        val raw =
-          try Schema.APIs.parseFrom(GZIPInputStream(apisStream))
-          finally apisStream.close()
-        ProtobufReaders(ReadMapper.getEmptyMapper, Schema.Version.V1_1).fromApis(shouldStoreApis = true)(raw)
-      catch case NonFatal(e) => throw Exception(s"Failed to load APIs from $apisFile", e)
+        val bufferedReader = new BufferedReader(new InputStreamReader(apisStream))
+        val analysisFormat = new TextAnalysisFormat(ReadWriteMappers.getEmptyMappers)
+        val (compileAnalysis, _) = analysisFormat.read(bufferedReader, null)
+        val analysis = compileAnalysis match {
+          case a: Analysis => a
+          case _ => throw new Exception("Failed to cast CompileAnalysis to Analysis")
+        }
+        analysis.apis
+      catch {
+        case NonFatal(e) => throw Exception(s"Failed to load APIs from $apisFile", e)
+      }
+      finally apisStream.close()
 
     val loader = TestFrameworkLoader(classLoader)
     val frameworks = workArgs.frameworks.flatMap(loader.load)
@@ -170,7 +180,9 @@ object TestRunner:
           case Isolation.Process =>
             val executable = runPath.resolve(workArgs.subprocessExec)
             ProcessTestRunner(framework, classpath, ProcessCommand(executable.toString, runArgs.subprocessArg), logger)
-          case Isolation.None => BasicTestRunner(framework, classLoader, parallel = workArgs.parallel, parallelN = workArgs.parallelN, logger)
+          case Isolation.None =>
+            BasicTestRunner(framework, classLoader, parallel = workArgs.parallel, parallelN = workArgs.parallelN, logger)
+
         try runner.execute(filteredTests, testScopeAndName.getOrElse(""), runArgs.frameworkArgs)
         catch
           case e: Throwable =>

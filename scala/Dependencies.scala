@@ -6,9 +6,9 @@ import sbt.librarymanagement.{DependencyBuilders, ModuleID, Resolver}, Dependenc
 object Dependencies:
 
   private val sbtVersion = "2.0.0-M2"
-  private val zincVersion = "2.0.0-alpha14"
+  private val zincVersion = "2.0.0-M1"
   val scalapbV = "1.0.0-alpha.1"
-  val munitV = "1.0.2"
+  val munitV = "1.0.3"
 
   val resolvers: Seq[Resolver] = Vector(
     "mavencentral".at("https://repo1.maven.org/maven2/"),
@@ -24,8 +24,8 @@ object Dependencies:
     "org.scala-lang" % "scala-reflect" -> "@scala_reflect_2_13//jar"
   )
   val dependencies: Seq[ModuleID] = Vector(
-    "org.jacoco"            % "org.jacoco.core"       % "0.8.10",
-    "org.jline"             % "jline-reader"          % "3.24.1",
+    "org.jacoco"            % "org.jacoco.core"       % "0.8.12",
+    "org.jline"             % "jline-reader"          % "3.28.0",
     "org.scala-lang.modules" %% "scala-xml"           % "2.3.0",
     "org.scala-sbt"         % "test-interface"        % "1.0",
     "org.scala-sbt"         % "compiler-interface"    % zincVersion,
@@ -37,7 +37,7 @@ object Dependencies:
     "org.scala-sbt"         %% "zinc-classpath"       % zincVersion,
     "org.scala-sbt"         %% "zinc-compile-core"    % zincVersion,
     "org.scala-sbt"         %% "zinc-persist"         % zincVersion,
-    "org.scala-sbt"         % "zinc-persist-core-assembly" % zincVersion,
+    "org.scala-sbt"         % "zinc-persist-core-assembly" % "2.0.0-alpha14",
     "org.scala-sbt"         %% "zinc-apiinfo"         % zincVersion,
     "org.scalameta"         %% "munit"                % munitV,
     "org.scalameta"         %% "munit-diff"           % munitV,

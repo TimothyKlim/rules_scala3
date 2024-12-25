@@ -16,6 +16,7 @@ import scala.util.control.NonFatal
 import com.google.devtools.build.buildjar.jarhelper.JarCreator
 import sbt.internal.inc.{Analysis, AnalyzingCompiler, CompileFailed, IncrementalCompilerImpl, Locate, PlainVirtualFile, ZincUtil}
 import sbt.internal.inc.classpath.ClassLoaderCache
+import sbt.internal.inc.{Stamps, SourceInfos}
 import scopt.{DefaultOParserSetup, OParser, OParserSetup}
 import xsbti.{Logger, PathBasedFile, Problem, Severity, VirtualFile}
 import xsbti.compile.{
@@ -200,8 +201,11 @@ object ZincRunner extends WorkerMain[ZincRunner.Arguments]:
         .get(file)
         .map: files =>
           Analysis.Empty.copy(
-            apis = analysesFormat.apis.read(files.apis),
-            relations = analysesFormat.relations.read(files.relations)
+            stamps = Stamps.empty,
+            apis = analysesFormat.apis(files.apis).read(files.apis),
+            relations = analysesFormat.relations(files.relations).read(files.relations),
+            infos = SourceInfos.empty,
+            compilations = sbt.internal.inc.Compilations.empty
           )
 
     val setup =
